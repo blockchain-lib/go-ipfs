@@ -4,7 +4,7 @@ import (
 	"errors"
 	_ "expvar"
 	"fmt"
-	"github.com/ipfs/go-ipfs/ipfc"
+	"github.com/ipfs/go-ipfs/miner"
 	"net"
 	"net/http"
 	_ "net/http/pprof"
@@ -457,7 +457,7 @@ func daemonFunc(req *cmds.Request, re cmds.ResponseEmitter, env cmds.Environment
 		fmt.Println("(Hit ctrl-c again to force-shutdown the daemon.)")
 	}()
 
-	ipfc.Run(req.Context, node)
+	miner.Run(req.Context, node)
 
 	// collect long-running errors and block for shutdown
 	// TODO(cryptix): our fuse currently doesn't follow this pattern for graceful shutdown
