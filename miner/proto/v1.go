@@ -7,9 +7,12 @@ import (
 )
 
 const (
-	V1            = "v1"
-	MsgAddFile    = "FetchFile"
-	MsgQuerySpace = "QuerySpace"
+	V1                 = "v1"
+	MsgAddFile         = "FetchFile"
+	MsgAddFileResponse = "FetchFileResp"
+
+	MsgFileState         = "FileState"
+	MsgFileStateResponse = "FileStateResp"
 )
 
 type (
@@ -20,16 +23,28 @@ type (
 	FetchFile struct {
 		Cid cid.Cid
 	}
-
-	QuerySpace struct {
-		Space int64
+	FetchFileResp struct {
+		Cid cid.Cid
+	}
+	QueryFileState struct {
+		Cids []cid.Cid
+	}
+	CidState struct {
+		Cid   cid.Cid
+		Exist bool
+	}
+	QueryFileStateResp struct {
+		Cids []CidState
 	}
 )
 
 func init() {
 	gob.Register(Message{})
 	gob.Register(FetchFile{})
-	gob.Register(QuerySpace{})
+	gob.Register(FetchFileResp{})
+	gob.Register(QueryFileState{})
+	gob.Register(CidState{})
+	gob.Register(QueryFileStateResp{})
 }
 
 func (m Message) EncodeMessage() ([]byte, error) {
@@ -52,4 +67,8 @@ func DecodeMessage(data []byte) (Message, error) {
 		return Message{}, err
 	}
 	return v, nil
+}
+
+func V1Topic(id string) string {
+	return V1 + "/" + id
 }

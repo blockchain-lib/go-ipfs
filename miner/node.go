@@ -3,9 +3,10 @@ package miner
 import (
 	"context"
 	"github.com/ipfs/go-ipfs/core"
+	"github.com/ipfs/go-ipfs/core/coreapi"
 	"github.com/ipfs/go-ipfs/miner/proto"
 	logging "github.com/ipfs/go-log/v2"
-	pubsub "github.com/libp2p/go-libp2p-pubsub"
+	"github.com/ipfs/interface-go-ipfs-core/options"
 	"runtime/debug"
 	"time"
 )
@@ -16,7 +17,12 @@ func Run(ctx context.Context, node *core.IpfsNode) {
 	smallNode := &SmallNode{
 		node: node,
 	}
-	smallNode.handler = NewV1Handler(node, smallNode)
+	api, err := coreapi.NewCoreAPI(node, options.Api.FetchBlocks(true))
+	if err != nil {
+		log.Errorf("")
+		return
+	}
+	smallNode.handler = NewV1Handler(api, smallNode)
 
 	go smallNode.Run(ctx)
 }
@@ -36,7 +42,7 @@ func (n *SmallNode) Run(ctx context.Context) {
 }
 
 func (n *SmallNode) Subscribe() error {
-	topic, err := n.node.PubSub.Join(proto.V1 + "/" + n.node.Identity.String())
+	topic, err := n.node.PubSub.Join(proto.V1Topic(n.node.Identity.String()))
 	if err != nil {
 		log.Errorf("failed to create sub topic: %v", err)
 		return err
@@ -78,13 +84,19 @@ func (n *SmallNode) Subscribe() error {
 	return nil
 }
 
-func (n *SmallNode) PublishMessage(topic string, msg *pubsub.Message) error {
+func (n *SmallNode) PublishMessage(ctx context.Context, topic string, msg *proto.Message) error {
+	data, err := msg.EncodeMessage()
+	if err != nil {
+		log.Errorf("failed to encode message: %v", err)
+		return err
+	}
 	receiverTopic, err := n.node.PubSub.Join(topic)
 	if err != nil {
+		log.Errorf("failed to create pub message: %v", err)
 		return err
 	}
 	defer receiverTopic.Close()
-	err = receiverTopic.Publish(context.Background(), msg.Data)
+	err = receiverTopic.Publish(ctx, data)
 	if err != nil {
 		log.Errorf("failed publish message: %v", err)
 	}

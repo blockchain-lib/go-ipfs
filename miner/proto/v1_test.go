@@ -29,21 +29,3 @@ func TestDecodeMessage(t *testing.T) {
 	}
 	t.Logf("ff: %+v", ff)
 }
-
-func TestDecodeMessage2(t *testing.T) {
-	msg := Message{
-		Type: MsgQuerySpace,
-		Data: QuerySpace{
-			Space: 1000,
-		},
-	}
-	data, err := msg.EncodeMessage()
-	if err != nil {
-		t.Errorf("%v", err.Error())
-	}
-	t.Logf("data: %s", hex.EncodeToString(data))
-
-	msg2, _ := DecodeMessage(data)
-
-	t.Logf("msg2: %+v", msg2)
-}
